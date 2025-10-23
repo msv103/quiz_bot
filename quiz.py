@@ -65,7 +65,9 @@ async def answer(callback: types.CallbackQuery, isTrue):
         await get_question(callback.message, callback.from_user.id)
     else:
         # Уведомление об окончании квиза
-        await callback.message.answer(f"Это был последний вопрос. Квиз завершен!\n Результат пользователя {callback.from_user.full_name} {correct_answers}/{current_question_index}")
+        builder = ReplyKeyboardBuilder()
+        builder.add(types.KeyboardButton(text="Показать статистику"))
+        await callback.message.answer(f"Это был последний вопрос. Квиз завершен!" ,reply_markup = builder.as_markup(resize_keyboard=True))
         current_question_index += 1
 
 @dp.callback_query(F.data == "right_answer")
@@ -91,3 +93,9 @@ async def cmd_start(message: types.Message):
 async def cmd_quiz(message: types.Message):
     await message.answer(f"Давайте начнем квиз!")
     await new_quiz(message)
+
+@dp.message(F.text=="Показать статистику")
+async def cmd_static(message: types.Message):
+    correct_answers = await db.get_correct_answers(message.from_user.id)
+    current_question_index = await db.get_quiz_index(message.from_user.id)
+    await message.answer(f"Результат пользователя {message.from_user.full_name} {correct_answers}/{current_question_index}")
